@@ -1,0 +1,82 @@
+% Notes and Exercises on The Art of Computer Programming
+\documentclass[letterpaper,12pt]{article}
+\usepackage{amsmath,amssymb,amsthm,enumitem,fourier}
+
+% Definitions
+
+\newcommand{\Z}{\mathbb{Z}}
+
+\newcommand{\set}{\leftarrow}
+
+\theoremstyle{remark}
+\newtheorem*{step}{Step}
+\newtheorem*{extendedeuclid}{Extended Euclidean Algorithm}
+
+% Meta
+\title{\textit{The Art of Computer Programming}\\Notes and Exercises}
+\author{John Peloquin}
+\date{}
+
+\begin{document}
+\maketitle
+\section*{Chapter~1}
+\subsection*{Section~1.2}
+\begin{extendedeuclid}
+For \(m,n\in\Z\) with \(m,n>0\), this algorithm computes \(d=(m,n)\) and \(a,b\in\Z\) with \(am+bn=d\).
+
+The basic euclidean algorithm is motivated by the observation that if \(m=qn+r\) where \(0\le r<n\) (that is, if \(q\)~and~\(r\) are the quotient and remainder, respectively, of division of~\(m\) by~\(n\)), then
+\begin{equation}
+(m,n)=(n,r)
+\end{equation}
+because the divisors of \(\{m,n\}\) are the same as the divisors of \(\{n,r\}\). Since \(r<n\), this suggests a recursive algorithm for computing~\(d\):
+\begin{description}
+\item[Step 0.] Set \(c_{0}\set m\), \(d_{0}\set n\), and write \(c_{0}=q_{0}d_{0}+r_{0}\), where \(0\le r_{0}<d_{0}\).
+\item[Step \(k>0\).] If \(r_{k-1}=0\), set \(d\set d_{k-1}\) and halt. Otherwise, set \(c_{k}\set d_{k-1}\), \(d_{k}\set r_{k-1}\), and write \(c_{k}=q_{k}d_{k}+r_{k}\) where \(0\le r_{k}<d_{k}\).
+\end{description}
+This algorithm eventually halts since \(n>r_{0}>r_{1}>\cdots\ge0\), so there is some least~\(k\) with \(r_{k}=0\) such that
+\[(m,n)=(c_{0},d_{0})=\cdots=(c_{k},d_{k})=d_{k}=d\]
+as desired. Note this is just Knuth's Algorithm 1.1E,\footnote{\cite{knuth1}, p.~2.} except that we are using new variables at each step instead of recycling variables in order to make the exposition clearer.
+
+The extended euclidean algorithm also computes \(a\)~and~\(b\) with \(am+bn=d\). Note if the basic algorithm has been carried out, \(a\)~and~\(b\) can be obtained by working backwards from~\(d\) and repeatedly substituting for remainders:
+\begin{align*}
+d=d_{k}=r_{k-1}&=c_{k-1}-q_{k-1}d_{k-1}\\
+			&=d_{k-2}-q_{k-1}r_{k-2}\\
+			&=d_{k-2}-q_{k-1}(c_{k-2}-q_{k-2}d_{k-2})\\
+			&=-q_{k-1}c_{k-2}+(1+q_{k-1}q_{k-2})d_{k-2}\\
+			&\ \ \vdots\\
+			&=(\,\cdots\,)c_{0}+(\,\cdots\,)d_{0}\\
+			&=(\,\cdots\,)m+(\,\cdots\,)n
+\end{align*}
+But working backwards like this requires storing all of the intermediate values obtained by the basic algorithm, which is inefficient. (In Knuth's Algorithm 1.1E with recycled variables, the intermediate values are lost.)
+
+A better approach is to compute values leading to \(a\)~and~\(b\) as we go, so that we will have \(a\)~and~\(b\) as soon as we have~\(d\). We introduce variables \(a_{k}\)~and~\(b_{k}\) such that at each step \(k\ge0\) in our algorithm,
+\begin{equation}
+a_{k}m+b_{k}n=d_{k}
+\end{equation}
+Then as soon as the algorithm halts with \(d=d_{k}\), we have \(a=a_{k}\) and \(b=b_{k}\).
+
+But how should we define \(a_{k}\)~and~\(b_{k}\)? We must have \(a_{0}\set0\) and \(b_{0}\set1\) since \(0m+1n=n\). Now \(d_{1}=r_{0}=m-q_{0}n\), so we must have \(a_{1}\set1\) and \(b_{1}\set-q_{0}\). By the first few steps of the computation shown above with \(k=2\), we also see that we must have \(a_{2}\set-q_{1}\) and \(b_{2}\set1+q_{0}q_{1}\). We see a pattern that suggests the following recursive definitions:
+\begin{equation}
+a_{k}\set a_{k-2}-q_{k-1}a_{k-1}\qquad b_{k}\set b_{k-2}-q_{k-1}b_{k-1}\quad(k\ge2)
+\end{equation}
+Indeed, we can verify by induction on~\(k\) that these definitions work:
+\begin{align*}
+a_{k}m+b_{k}n&=(a_{k-2}-q_{k-1}a_{k-1})m+(b_{k-2}-q_{k-1}b_{k-1})n&&\\
+			&=(a_{k-2}m+b_{k-2}n)-q_{k-1}(a_{k-1}m+b_{k-1}n)&&\\
+			&=d_{k-2}-q_{k-1}d_{k-1}&&\text{by induction}\\
+			&=c_{k-1}-q_{k-1}d_{k-1}&&\\
+			&=r_{k-1}=d_{k}
+\end{align*}
+Our extended algorithm becomes:
+\begin{description}
+\item[Step 0.] Set \(c_{0}\set m\), \(d_{0}\set n\), \(a_{-1}\set b_{0}\set1\), \(a_{0}\set b_{-1}\set0\), and write \(c_{0}=q_{0}d_{0}+r_{0}\), where \(0\le r_{0}<d_{0}\).
+\item[Step \(k>0\).] If \(r_{k-1}=0\), set \(d\set d_{k-1}\), \(a\set a_{k-1}\), \(b\set b_{k-1}\) and halt. Otherwise, set \(c_{k}\set d_{k-1}\), \(d_{k}\set r_{k-1}\), \(a_{k}=a_{k-2}-q_{k-1}a_{k-1}\), \(b_{k}=b_{k-2}-q_{k-1}b_{k-1}\), and write \(c_{k}=q_{k}d_{k}+r_{k}\) where \(0\le r_{k}<d_{k}\).
+\end{description}
+As before, this algorithm eventually halts, at which point \(d=(m,n)=am+bn\) as desired. Note this is just Knuth's Algorithm 1.2E\footnote{\cite{knuth1}, p.~13--4.} without recycled variables. In Knuth's version, variables \(a'\)~and~\(b'\) hold the values of \(a\)~and~\(b\) from the last iteration of the loop, which are needed together with the values from the current iteration in order to compute the values for the next iteration (as is clear from the recursive definitions above).
+\end{extendedeuclid}
+
+% References
+\begin{thebibliography}{0}
+\bibitem{knuth1} Knuth, D. \textit{The Art of Computer Programming, Volume~1: Fundamental Algorithms.}, 3rd.~ed. Addison-Wesley, 1997.
+\end{thebibliography}
+\end{document}
